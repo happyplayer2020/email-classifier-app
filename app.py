@@ -54,6 +54,7 @@ GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5000/oa
 # Gmail API scopes
 SCOPES = [
     "openid",
+    "https://www.googleapis.com/auth/gmail.readonly",
     "https://www.googleapis.com/auth/gmail.modify",
     "https://www.googleapis.com/auth/userinfo.profile",
     "https://www.googleapis.com/auth/userinfo.email"
@@ -370,6 +371,8 @@ def oauth2callback():
         
     except Exception as e:
         logger.error(f"OAuth error: {str(e)}")
+        logger.error(f"Request URL: {request.url}")
+        logger.error(f"Request args: {dict(request.args)}")
         flash('Login failed. Please try again.', 'error')
         return redirect(url_for('index'))
 
