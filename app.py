@@ -54,7 +54,7 @@ GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5000/oa
 # Gmail API scopes
 SCOPES = [
     "openid",
-    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.modify",
     "https://www.googleapis.com/auth/userinfo.profile",
     "https://www.googleapis.com/auth/userinfo.email"
 ]
@@ -162,6 +162,26 @@ def get_gmail_service(user):
         logger.error(f"Error getting Gmail service: {str(e)}")
         return None
 
+def get_or_create_label(service, user_id, label_name):
+    labels = service.users().labels().list(userId=user_id).execute().get('labels', [])
+    for label in labels:
+        if label['name'].lower() == label_name.lower():
+            return label['id']
+    label_obj = {
+        'name': label_name,
+        'labelListVisibility': 'labelShow',
+        'messageListVisibility': 'show'
+    }
+    label = service.users().labels().create(userId=user_id, body=label_obj).execute()
+    return label['id']
+
+def apply_label_to_email(service, user_id, message_id, label_id):
+    service.users().messages().modify(
+        userId=user_id,
+        id=message_id,
+        body={'addLabelIds': [label_id]}
+    ).execute()
+
 def fetch_and_classify_emails(user, max_emails=50):
     """Fetch emails from Gmail and classify them"""
     try:
@@ -216,6 +236,10 @@ def fetch_and_classify_emails(user, max_emails=50):
                 
                 # Classify email
                 category = classify_email(content, subject)
+
+                # Create/apply Gmail label
+                label_id = get_or_create_label(service, 'me', category.capitalize())
+                apply_label_to_email(service, 'me', message['id'], label_id)
                 
                 # Parse received date
                 date_header = next((h['value'] for h in headers if h['name'] == 'Date'), '')
