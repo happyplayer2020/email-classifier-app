@@ -58,6 +58,29 @@
             opacity: 0.8;
         }
 
+        .subscription-status {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .subscription-status.trial {
+            background: rgba(255, 193, 7, 0.2);
+            color: #856404;
+        }
+
+        .subscription-status.active {
+            background: rgba(40, 167, 69, 0.2);
+            color: #155724;
+        }
+
+        .subscription-status.expired {
+            background: rgba(220, 53, 69, 0.2);
+            color: #721c24;
+        }
+
         .logout-btn {
             background: rgba(255,255,255,0.2);
             color: white;
@@ -410,6 +433,19 @@
                 <div class="user-info">
                     <div class="user-name">{{ current_user.name }}</div>
                     <div class="user-email">{{ current_user.email }}</div>
+                    {% if user.subscription_status == 'trial' %}
+                        <div class="subscription-status trial">
+                            <i class="fas fa-clock"></i> Trial - {{ user.days_left_in_trial }} days left
+                        </div>
+                    {% elif user.subscription_status == 'active' %}
+                        <div class="subscription-status active">
+                            <i class="fas fa-check-circle"></i> Pro Plan Active
+                        </div>
+                    {% else %}
+                        <div class="subscription-status expired">
+                            <i class="fas fa-exclamation-triangle"></i> Trial Expired
+                        </div>
+                    {% endif %}
                 </div>
                 <a href="/logout" class="logout-btn">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -445,6 +481,17 @@
                 <a href="/manual" class="btn btn-secondary">
                     <i class="fas fa-magic"></i> Manual Classifier
                 </a>
+                {% if user.subscription_status == 'trial' and user.days_left_in_trial <= 7 %}
+                    <a href="/pricing" class="btn btn-primary" style="background: #dc3545;">
+                        <i class="fas fa-crown"></i> Upgrade Now
+                    </a>
+                {% elif user.subscription_status == 'active' %}
+                    <form method="POST" action="/cancel-subscription" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary" onclick="return confirm('Are you sure you want to cancel your subscription?')">
+                            <i class="fas fa-times"></i> Cancel Subscription
+                        </button>
+                    </form>
+                {% endif %}
             </div>
         </div>
 

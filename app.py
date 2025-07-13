@@ -19,6 +19,7 @@ import email
 from email.mime.text import MIMEText
 import pickle
 import tempfile
+import stripe
 
 # Load environment variables
 load_dotenv()
@@ -50,6 +51,12 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5000/oauth2callback')
+
+# Stripe configuration
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID')  # Your €20/month price ID
 
 # Gmail API scopes
 SCOPES = [
@@ -84,7 +91,30 @@ class User(UserMixin, db.Model):
     refresh_token = db.Column(db.Text, nullable=True)
     token_expiry = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Subscription fields
+    subscription_status = db.Column(db.String(20), default='trial')  # trial, active, past_due, canceled
+    stripe_customer_id = db.Column(db.String(120), nullable=True)
+    stripe_subscription_id = db.Column(db.String(120), nullable=True)
+    trial_ends_at = db.Column(db.DateTime, nullable=True)
+    subscription_ends_at = db.Column(db.DateTime, nullable=True)
+    
     emails = db.relationship('Email', backref='user', lazy=True)
+    
+    @property
+    def is_subscription_active(self):
+        """Check if user has active subscription or is in trial"""
+        if self.subscription_status == 'trial':
+            return self.trial_ends_at and self.trial_ends_at > datetime.utcnow()
+        return self.subscription_status == 'active'
+    
+    @property
+    def days_left_in_trial(self):
+        """Get days remaining in trial"""
+        if self.subscription_status == 'trial' and self.trial_ends_at:
+            days_left = (self.trial_ends_at - datetime.utcnow()).days
+            return max(0, days_left)
+        return 0
 
 class Email(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -347,14 +377,16 @@ def oauth2callback():
         user = User.query.filter_by(google_id=user_info['id']).first()
         
         if not user:
-            # Create new user
+            # Create new user with 1-month trial
             user = User(
                 email=user_info['email'],
                 name=user_info['name'],
                 google_id=user_info['id'],
                 access_token=credentials.token,
                 refresh_token=credentials.refresh_token,
-                token_expiry=credentials.expiry
+                token_expiry=credentials.expiry,
+                subscription_status='trial',
+                trial_ends_at=datetime.utcnow() + timedelta(days=30)
             )
             db.session.add(user)
         else:
@@ -388,6 +420,11 @@ def logout():
 @login_required
 def dashboard():
     """User dashboard"""
+    # Check subscription status
+    if not current_user.is_subscription_active:
+        flash('Your trial has expired. Please upgrade to continue using the service.', 'warning')
+        return redirect(url_for('pricing'))
+    
     # Get user's emails
     emails = Email.query.filter_by(user_id=current_user.id).order_by(Email.received_at.desc()).limit(100).all()
     
@@ -402,12 +439,17 @@ def dashboard():
                          category_stats=category_stats,
                          categories=EMAIL_CATEGORIES,
                          now=datetime.utcnow(),
-                         timedelta=timedelta)
+                         timedelta=timedelta,
+                         user=current_user)
 
 @app.route('/api/fetch-emails', methods=['POST'])
 @login_required
 def fetch_emails():
     """API endpoint to fetch and classify new emails"""
+    # Check subscription status
+    if not current_user.is_subscription_active:
+        return jsonify({"success": False, "error": "Subscription required. Please upgrade to continue."}), 403
+    
     try:
         success = fetch_and_classify_emails(current_user)
         if success:
@@ -507,6 +549,119 @@ def mark_email_read(email_id):
     except Exception as e:
         logger.error(f"Error marking email read: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+
+@app.route('/pricing')
+def pricing():
+    """Pricing page"""
+    return render_template('pricing.html', 
+                         stripe_publishable_key=STRIPE_PUBLISHABLE_KEY,
+                         price_id=STRIPE_PRICE_ID)
+
+@app.route('/create-checkout-session', methods=['POST'])
+@login_required
+def create_checkout_session():
+    """Create Stripe checkout session"""
+    try:
+        # Create or get Stripe customer
+        if not current_user.stripe_customer_id:
+            customer = stripe.Customer.create(
+                email=current_user.email,
+                name=current_user.name
+            )
+            current_user.stripe_customer_id = customer.id
+            db.session.commit()
+        
+        # Create checkout session
+        checkout_session = stripe.checkout.Session.create(
+            customer=current_user.stripe_customer_id,
+            payment_method_types=['card'],
+            line_items=[{
+                'price': STRIPE_PRICE_ID,
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=request.host_url + 'dashboard',
+            cancel_url=request.host_url + 'pricing',
+            metadata={
+                'user_id': current_user.id
+            }
+        )
+        
+        return jsonify({'id': checkout_session.id})
+        
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {str(e)}")
+        return jsonify({'error': 'Failed to create checkout session'}), 500
+
+@app.route('/stripe-webhook', methods=['POST'])
+def stripe_webhook():
+    """Handle Stripe webhooks"""
+    payload = request.get_data()
+    sig_header = request.headers.get('Stripe-Signature')
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        return jsonify({'error': 'Invalid payload'}), 400
+    except stripe.error.SignatureVerificationError as e:
+        return jsonify({'error': 'Invalid signature'}), 400
+    
+    # Handle the event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        user_id = session['metadata']['user_id']
+        user = User.query.get(user_id)
+        
+        if user:
+            user.subscription_status = 'active'
+            user.stripe_subscription_id = session['subscription']
+            db.session.commit()
+    
+    elif event['type'] == 'customer.subscription.updated':
+        subscription = event['data']['object']
+        user = User.query.filter_by(stripe_subscription_id=subscription['id']).first()
+        
+        if user:
+            user.subscription_status = subscription['status']
+            if subscription['status'] == 'canceled':
+                user.subscription_ends_at = datetime.fromtimestamp(subscription['current_period_end'])
+            db.session.commit()
+    
+    elif event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        user = User.query.filter_by(stripe_subscription_id=subscription['id']).first()
+        
+        if user:
+            user.subscription_status = 'canceled'
+            user.subscription_ends_at = datetime.fromtimestamp(subscription['current_period_end'])
+            db.session.commit()
+    
+    return jsonify({'status': 'success'})
+
+@app.route('/cancel-subscription', methods=['POST'])
+@login_required
+def cancel_subscription():
+    """Cancel user subscription"""
+    try:
+        if current_user.stripe_subscription_id:
+            stripe.Subscription.modify(
+                current_user.stripe_subscription_id,
+                cancel_at_period_end=True
+            )
+            current_user.subscription_status = 'canceled'
+            db.session.commit()
+            flash('Your subscription will be canceled at the end of the current period.', 'info')
+        else:
+            flash('No active subscription found.', 'error')
+        
+        return redirect(url_for('dashboard'))
+        
+    except Exception as e:
+        logger.error(f"Error canceling subscription: {str(e)}")
+        flash('Error canceling subscription. Please try again.', 'error')
+        return redirect(url_for('dashboard'))
 
 @app.route('/health', methods=['GET'])
 def health_check():

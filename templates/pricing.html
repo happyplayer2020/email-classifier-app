@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - Email Classifier</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-gray-900">Email Classifier</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if current_user.is_authenticated %}
+                        <a href="/dashboard" class="text-gray-700 hover:text-gray-900">Dashboard</a>
+                        <a href="/logout" class="text-gray-700 hover:text-gray-900">Logout</a>
+                    {% else %}
+                        <a href="/login" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="gradient-bg text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl font-bold mb-4">Choose Your Plan</h1>
+            <p class="text-xl opacity-90">Start with a free trial, then choose the plan that works for you</p>
+        </div>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <!-- Free Trial -->
+            <div class="bg-white rounded-lg shadow-lg p-8 border-2 border-gray-200">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Free Trial</h3>
+                    <div class="text-4xl font-bold text-gray-900 mb-4">€0</div>
+                    <p class="text-gray-600 mb-6">Perfect for trying out our service</p>
+                </div>
+                <ul class="space-y-3 mb-8">
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        1 month free trial
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Unlimited email classification
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Gmail integration
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Automatic labeling
+                    </li>
+                </ul>
+                <div class="text-center">
+                    <a href="/login" class="w-full bg-gray-600 text-white py-3 px-6 rounded-md hover:bg-gray-700 transition duration-200 inline-block">
+                        Start Free Trial
+                    </a>
+                </div>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="bg-white rounded-lg shadow-xl p-8 border-2 border-blue-500 relative">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span class="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">Most Popular</span>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Pro Plan</h3>
+                    <div class="text-4xl font-bold text-gray-900 mb-4">€20<span class="text-lg text-gray-600">/month</span></div>
+                    <p class="text-gray-600 mb-6">For power users and professionals</p>
+                </div>
+                <ul class="space-y-3 mb-8">
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Everything in Free Trial
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Priority support
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Advanced analytics
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Custom categories
+                    </li>
+                </ul>
+                <div class="text-center">
+                    {% if current_user.is_authenticated %}
+                        <button id="checkout-button" class="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition duration-200">
+                            Subscribe Now
+                        </button>
+                    {% else %}
+                        <a href="/login" class="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition duration-200 inline-block">
+                            Login to Subscribe
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="bg-white py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">Can I cancel anytime?</h3>
+                    <p class="text-gray-600">Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your current billing period.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">What happens after my trial ends?</h3>
+                    <p class="text-gray-600">After your 30-day free trial, you'll need to subscribe to continue using the service. We'll notify you before your trial expires.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">Is my data secure?</h3>
+                    <p class="text-gray-600">Yes, we use industry-standard encryption and security practices. Your email data is processed securely and we never store sensitive information.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2024 Email Classifier. All rights reserved.</p>
+        </div>
+    </footer>
+
+    {% if current_user.is_authenticated %}
+    <script>
+        const stripe = Stripe('{{ stripe_publishable_key }}');
+        const checkoutButton = document.getElementById('checkout-button');
+
+        checkoutButton.addEventListener('click', function() {
+            checkoutButton.disabled = true;
+            checkoutButton.textContent = 'Loading...';
+
+            fetch('/create-checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(session) {
+                if (session.error) {
+                    alert('Error: ' + session.error);
+                    checkoutButton.disabled = false;
+                    checkoutButton.textContent = 'Subscribe Now';
+                    return;
+                }
+                return stripe.redirectToCheckout({ sessionId: session.id });
+            })
+            .then(function(result) {
+                if (result.error) {
+                    alert('Error: ' + result.error.message);
+                    checkoutButton.disabled = false;
+                    checkoutButton.textContent = 'Subscribe Now';
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                checkoutButton.disabled = false;
+                checkoutButton.textContent = 'Subscribe Now';
+            });
+        });
+    </script>
+    {% endif %}
+</body>
+</html> 
