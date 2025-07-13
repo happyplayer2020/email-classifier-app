@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Classifier</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: capitalize;
+            margin-top: 10px;
+        }
+
+        .category-spam { background: #ff6b6b; color: white; }
+        .category-important { background: #4ecdc4; color: white; }
+        .category-work { background: #45b7d1; color: white; }
+        .category-personal { background: #96ceb4; color: white; }
+        .category-newsletter { background: #feca57; color: white; }
+        .category-promotional { background: #ff9ff3; color: white; }
+        .category-social { background: #54a0ff; color: white; }
+        .category-finance { background: #5f27cd; color: white; }
+        .category-travel { background: #00d2d3; color: white; }
+        .category-other { background: #8395a7; color: white; }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .examples {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .examples h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .example-btn {
+            background: #e9ecef;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-envelope"></i> Email Classifier</h1>
+            <p>AI-powered email classification using OpenAI</p>
+        </div>
+        
+        <div class="content">
+            <form id="emailForm">
+                <div class="form-group">
+                    <label for="subject">Email Subject (Optional):</label>
+                    <input type="text" id="subject" name="subject" placeholder="Enter email subject...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="content">Email Content:</label>
+                    <textarea id="content" name="content" placeholder="Enter email content here..." required></textarea>
+                </div>
+                
+                <button type="submit" class="btn" id="classifyBtn">
+                    <i class="fas fa-magic"></i> Classify Email
+                </button>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing email content...</p>
+            </div>
+            
+            <div class="result" id="result"></div>
+            
+            <div class="examples">
+                <h3>Try these examples:</h3>
+                <button class="example-btn" onclick="loadExample('spam')">Spam Email</button>
+                <button class="example-btn" onclick="loadExample('work')">Work Email</button>
+                <button class="example-btn" onclick="loadExample('personal')">Personal Email</button>
+                <button class="example-btn" onclick="loadExample('newsletter')">Newsletter</button>
+                <button class="example-btn" onclick="loadExample('promotional')">Promotional</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const examples = {
+            spam: {
+                subject: "URGENT: You've won $1,000,000!",
+                content: "CONGRATULATIONS! You have been selected to receive $1,000,000! Click here to claim your prize now! Limited time offer! Don't miss out on this amazing opportunity!"
+            },
+            work: {
+                subject: "Project Update - Q4 Goals",
+                content: "Hi team, I wanted to provide an update on our Q4 project goals. We're currently at 75% completion and need to focus on the remaining deliverables. Please review the attached documents and let me know if you have any questions. Best regards, John"
+            },
+            personal: {
+                subject: "Dinner plans this weekend?",
+                content: "Hey Sarah! How are you doing? I was wondering if you'd like to grab dinner this weekend? I found this new Italian restaurant downtown that looks amazing. Let me know what works for you! - Mike"
+            },
+            newsletter: {
+                subject: "Weekly Tech News - Issue #45",
+                content: "This week in tech: Apple announces new iPhone features, Google releases Android 14, and Microsoft updates Windows. Read our full analysis and stay up to date with the latest developments in the tech world."
+            },
+            promotional: {
+                subject: "50% OFF - Limited Time Sale!",
+                content: "Don't miss our biggest sale of the year! Get 50% off all items in our store. Valid until Sunday. Use code SAVE50 at checkout. Free shipping on orders over $50. Shop now!"
+            }
+        };
+
+        function loadExample(type) {
+            const example = examples[type];
+            if (example) {
+                document.getElementById('subject').value = example.subject;
+                document.getElementById('content').value = example.content;
+            }
+        }
+
+        document.getElementById('emailForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const subject = document.getElementById('subject').value;
+            const content = document.getElementById('content').value;
+            const classifyBtn = document.getElementById('classifyBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            if (!content.trim()) {
+                showResult('Please enter email content', 'error');
+                return;
+            }
+            
+            // Show loading
+            classifyBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/classify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        subject: subject,
+                        content: content
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`Email classified as: <span class="category-badge category-${data.category}">${data.category}</span>`, 'success');
+                } else {
+                    showResult(data.error || 'Failed to classify email', 'error');
+                }
+            } catch (error) {
+                showResult('Network error. Please try again.', 'error');
+            } finally {
+                classifyBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+        
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.innerHTML = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+    </script>
+</body>
+</html> 

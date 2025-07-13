@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Classifier - AI-Powered Email Organization</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 100px 20px;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            max-width: 600px;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            background: #fff;
+            color: #667eea;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            color: #667eea;
+        }
+
+        .features {
+            padding: 80px 20px;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .categories {
+            padding: 80px 20px;
+            background: white;
+        }
+
+        .categories h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            color: #333;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .category-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .category-item h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .category-item p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .footer p {
+            opacity: 0.8;
+        }
+
+        .manual-classifier {
+            padding: 80px 20px;
+            background: #f8f9fa;
+        }
+
+        .manual-classifier h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #333;
+        }
+
+        .manual-classifier p {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            color: #666;
+        }
+
+        .try-button {
+            background: #667eea;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .try-button:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .categories-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1><i class="fas fa-envelope"></i> Email Classifier</h1>
+        <p>Transform your inbox with AI-powered email organization. Automatically categorize, filter, and prioritize your emails using advanced machine learning.</p>
+        <a href="/login" class="cta-button">
+            <i class="fab fa-google"></i>
+            Sign in with Google
+        </a>
+    </div>
+
+    <section class="features">
+        <div class="container">
+            <h2>Why Choose Email Classifier?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI-Powered</h3>
+                    <p>Uses OpenAI's GPT-3.5-turbo to intelligently analyze and categorize your emails with high accuracy.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <h3>Automatic Sync</h3>
+                    <p>Seamlessly connects to your Gmail account and automatically fetches and classifies new emails.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>Smart Analytics</h3>
+                    <p>Get insights into your email patterns with detailed statistics and category breakdowns.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Secure & Private</h3>
+                    <p>Your emails are processed securely with industry-standard encryption and privacy protection.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Mobile Friendly</h3>
+                    <p>Access your organized inbox from any device with our responsive web interface.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Real-time</h3>
+                    <p>Get instant email classification as new messages arrive in your inbox.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="categories">
+        <div class="container">
+            <h2>Email Categories</h2>
+            <div class="categories-grid">
+                <div class="category-item">
+                    <h4>Spam</h4>
+                    <p>Unwanted or malicious emails</p>
+                </div>
+                <div class="category-item">
+                    <h4>Important</h4>
+                    <p>High-priority emails requiring attention</p>
+                </div>
+                <div class="category-item">
+                    <h4>Work</h4>
+                    <p>Professional and business-related emails</p>
+                </div>
+                <div class="category-item">
+                    <h4>Personal</h4>
+                    <p>Personal communications from friends and family</p>
+                </div>
+                <div class="category-item">
+                    <h4>Newsletter</h4>
+                    <p>Newsletters and subscription emails</p>
+                </div>
+                <div class="category-item">
+                    <h4>Promotional</h4>
+                    <p>Marketing and promotional content</p>
+                </div>
+                <div class="category-item">
+                    <h4>Social</h4>
+                    <p>Social media notifications and updates</p>
+                </div>
+                <div class="category-item">
+                    <h4>Finance</h4>
+                    <p>Financial statements, bills, and banking emails</p>
+                </div>
+                <div class="category-item">
+                    <h4>Travel</h4>
+                    <p>Travel confirmations and booking details</p>
+                </div>
+                <div class="category-item">
+                    <h4>Other</h4>
+                    <p>Miscellaneous emails that don't fit other categories</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="manual-classifier">
+        <div class="container">
+            <h2>Try It Now</h2>
+            <p>Want to test the email classifier without connecting your account? Try our manual classification tool.</p>
+            <a href="/manual" class="try-button">
+                <i class="fas fa-magic"></i>
+                Manual Email Classifier
+            </a>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Email Classifier. Built with ❤️ using Flask and OpenAI.</p>
+        </div>
+    </footer>
+</body>
+</html> 
