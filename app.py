@@ -372,7 +372,9 @@ def dashboard():
     return render_template('dashboard.html', 
                          emails=emails, 
                          category_stats=category_stats,
-                         categories=EMAIL_CATEGORIES)
+                         categories=EMAIL_CATEGORIES,
+                         now=datetime.utcnow(),
+                         timedelta=timedelta)
 
 @app.route('/api/fetch-emails', methods=['POST'])
 @login_required
